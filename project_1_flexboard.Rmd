@@ -10,13 +10,6 @@ output:
   source_code: embed
 
 ---
-  
-
-
-
-# Problem 1
-
-## Part a
 
 ```{r}
 
@@ -48,9 +41,14 @@ cleaned_dr2iff <- dr2iff[dr2iff$DR2_030Z <= 2, ]
 
 ```
 
-### KNN Classification
+KNN Model
+=======================================================================
 
-## Text
+Row {data-width=1080}
+-----------------------------------------------------------------------
+
+
+### KNN Classification
 
 ```{r}
 
@@ -78,18 +76,28 @@ confusion_mat <- table("Predicted Classes" = knn_classes_output, "Actual Classes
 
 sum(knn_classes_output == test_classes) / length(test_classes)
 
-print(cleaned_dr2iff$DR2_030Z)
-print(knn_classes_output)
-
 ggplot(test_set_20, aes(x=DR2ICHOL, y=DR2IGRMS, col=knn_classes_output)) + geom_point()
 
+
+```
+
+Row {data-width=1080}
+-----------------------------------------------------------------------
+
+### KNN Classification
+
+```{r}
 temp_test_set_20 <- test_set_20
 temp_test_set_20$DR2_030Z <- as.factor(temp_test_set_20$DR2_030Z)
 
 ggplot(temp_test_set_20, aes(x=DR2ICHOL, y=DR2IGRMS, col=DR2_030Z)) + geom_point()
-
 ```
 
+
+Row
+-----------------------------------------------------------------------
+
+### Multiple Regression
 
 ```{r}
 
@@ -100,9 +108,9 @@ test_set_20 <- test_set_20[c("DR2IKCAL","DR2ICARB","DR2ISFAT","DR2IPFAT","DR2IPR
 
 modfit <- lm(DR2IKCAL ~ ., data = train_set_80)
 
-summary(modfit)
+#summary(modfit)
 
-ggpairs(dr2iff, columns = c("DR2ICARB", "DR2ISFAT","DR2IPFAT", "DR2IKCAL", "DR2IPROT"))
+#ggpairs(dr2iff, columns = c("DR2ICARB", "DR2ISFAT","DR2IPFAT", "DR2IKCAL", "DR2IPROT"))
 
 MSE_tr_80 <- mean((train_set_80$DR2IKCAL - predict(modfit, newdata = train_set_80) )^2, na.rm = TRUE)
 

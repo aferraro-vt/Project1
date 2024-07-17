@@ -1,0 +1,256 @@
+---
+title: "Focal Chart (Top)"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: scroll
+---
+
+KNN Model
+=======================================================================
+
+Row {data-width=600}
+-------------------------------------
+
+### Background & Write-up
+
+The research question that we proposed for building the k-nearest neighbors (kNN) classification model, is the following question:
+
+"Is it possible to determine whether a person is consuming their meal at breakfast or lunch based on the caloric and nutrition values of that meal alone?"
+
+In order to explore this we first did some preliminary research online to identify nutrition categories or values that we can use to potentially differentiate breakfast from lunch. Thereafter we confirmed if these metrics were discernable in the dataset by determining if we could visually identify distinct clusters for breakfast and lunch foods for certain nutrition metrics. We identified that cholesterol, sugar, and amount of grams were classes that could be used to differentiate the two.
+
+Compared to breakfast foods, lunch foods are known to include bigger portions, have a higher portion of cholesterol, and a lower amount of sugar. The citations/research that we used to justify these claims are reproduced below.
+
+Lunch foods are typically more composed "unhealthy fats" that include processed or deli-style meats, processed foods, and takeaway foods. All of these types of foods are related to high amounts of cholesterol. This difference between breakfast foods and lunch foods makes it an ideal metric to differentiate whether a food was consumed during breakfast or lunch. 
+
+https://www.betterhealth.vic.gov.au/health/conditionsandtreatments/cholesterol-healthy-eating-tips
+
+Typically breakfast meals are low in calories when contrasted with lunch meals. Breakfast meals typically are 300-400 calories while lunch can be anywhere between 500-700 calories. This difference in calories can be related to the grams of the meal itself. The more calories the heavier the food would have to be. Therefore one of the classes we chose to differentiate breakfast and lunch was the amount of grams of the food that was consumed (DR2IGRMS).
+
+https://globalnews.ca/news/3615212/this-is-what-your-breakfast-lunch-and-dinner-calories-actually-look-like/
+    
+For the last class we chose sugars as another indicator of whether a food was consumed during breakfast or lunch. As reported by Harvard School of Public Health, added sugars are high in breakfast cereals. With this in mind, we speculated that the total sugar content within the food consumed would be a reasonable indicator for whether a meal was eaten during breakfast or for lunch. The higher the amount of sugars, proportional to the same amount of weight, was related to breakfast foods while the inverse was related to lunch foods. We explored the data and did find this to be partially true. Breakfast foods showed a slight difference in lunch foods when indexed for sugar (DR2ISUGR).
+  
+https://nutritionsource.hsph.harvard.edu/carbohydrates/added-sugar-in-the-diet/
+
+    
+Row {data-width=600}
+-------------------------------------
+
+### Data Exploration: Cholesterol 
+
+```{r}
+
+#Import Libraries
+library(haven)
+library(ggplot2)
+library(FNN)
+library(dplyr)
+library(plotly)
+library(plyr)
+library(GGally)
+library(flexdashboard)
+library(knitr)
+library(kableExtra)
+
+set.seed(145)
+
+# Import file
+dr2iff <- read_xpt("DR2IFF_I.xpt")
+#summary(dr2iff)
+
+splitOccasion <- split(dr2iff, f=factor(dr2iff$DR2_030Z))
+breakfastOccasion <- splitOccasion$"1"
+lunchOccasion <- splitOccasion$"2"
+dinnerOccasion <- splitOccasion$"3"
+cleaned_dr2iff <- dr2iff[dr2iff$DR2_030Z <= 2, ]
+
+cleaned_dr2iff <- cleaned_dr2iff %>% filter(!is.na(DR2ISUGR) & !is.na(DR2ITFAT) & !is.na(DR2ICHOL) & !is.na(DR2_030Z) & !is.na(DR2IGRMS))
+
+amount_80 <- nrow(cleaned_dr2iff) * 0.80
+
+indexes <- seq_len(nrow(cleaned_dr2iff))
+
+train_indexes <- sample(indexes, size=amount_80)
+
+train_set_80 <- cleaned_dr2iff[train_indexes, ]
+test_set_20  <- cleaned_dr2iff[-train_indexes, ]
+
+temp_cleaned_dr2iff <- cleaned_dr2iff
+temp_cleaned_dr2iff$DR2_030Z <- as.factor(temp_cleaned_dr2iff$DR2_030Z)
+
+ggplot(temp_cleaned_dr2iff, aes(x=DR2ICHOL, y=DR2IGRMS, col=DR2_030Z)) + geom_point() + xlim(0, 1000) + ylim(0, 1000) + scale_color_discrete(name = "Original Data", labels = c("Breakfast", "Lunch")) # New legend values
+
+```
+
+Row {data-width=600}
+-------------------------------------
+
+### Data Exploration: Total Fat 
+
+```{r}
+
+ggplot(temp_cleaned_dr2iff, aes(x=DR2ITFAT, y=DR2IGRMS, col=DR2_030Z)) + geom_point() + xlim(0, 100) + ylim(0, 1000) + scale_color_discrete(name = "Original Data", labels = c("Breakfast", "Lunch")) # New legend values
+
+```
+
+
+Row {data-width=600}
+-------------------------------------
+
+### Data Exploration: Sugar 
+
+```{r}
+
+ggplot(temp_cleaned_dr2iff, aes(x=DR2ISUGR, y=DR2IGRMS, col=DR2_030Z)) + geom_point() + xlim(0, 100) + ylim(0, 1000) + scale_color_discrete(name = "Original Data", labels = c("Breakfast", "Lunch")) # New legend values
+
+```
+
+Row 
+-------------------------------------
+
+### Building the Model
+
+Once confirming there were visible differences between all three classes for breakfast and lunch we then continued to build a k-nearest neighbors model to predict whether a food was consumed breakfast or lunch based on sugar content, grams of food, amount of fat, and amount of cholesterol.
+    
+We trained the model and we got the results below. The plot is for only 20% of the original data (the test set) and it shows whether it classified the food as consumed during breakfast or lunch.  
+  
+Row
+-------------------------------------
+
+### Building the Model
+
+```{r, fig.width=6, fig.height=4}
+
+train_features <- train_set_80[, c("DR2ICHOL","DR2IGRMS","DR2ISUGR","DR2ITFAT")]
+test_features <- test_set_20[, c("DR2ICHOL","DR2IGRMS","DR2ISUGR","DR2ITFAT")]
+
+train_classes <- train_set_80$DR2_030Z
+test_classes <- test_set_20$DR2_030Z
+
+knn_classes_output <- knn(train=train_features, test=test_features, cl=train_classes, k=5)
+
+confusion_mat <- table("Predicted Classes" = knn_classes_output, "Actual Classes" = test_classes)
+
+#sum(knn_classes_output == test_classes) / length(test_classes)
+
+#ggplot(test_set_20, aes(x=DR2ICHOL, y=DR2IGRMS, col=knn_classes_output)) + geom_point() + xlim(0, 1000) + ylim(0, 1000) + labs(col = "New Legend Name")
+
+ggplot(test_set_20, aes(x=DR2ICHOL, y=DR2IGRMS, col=knn_classes_output)) + geom_point() + xlim(0, 1000) + ylim(0, 1000) + scale_color_discrete(
+    name = "Predict Class",
+    labels = c("Breakfast", "Lunch") # New legend values
+  )
+
+
+```
+
+Row 
+-------------------------------------
+
+### Inspection
+
+Here is the truth data of that trainig set to compare the predicted values.
+
+Row {data-width=600}
+-------------------------------------
+
+### Chart 1
+
+```{r, fig.width=6, fig.height=4}
+temp_test_set_20 <- test_set_20
+temp_test_set_20$DR2_030Z <- as.factor(temp_test_set_20$DR2_030Z)
+
+ggplot(temp_test_set_20, aes(x=DR2ICHOL, y=DR2IGRMS, col=DR2_030Z)) + geom_point() + xlim(0, 1000) + ylim(0, 1000) + scale_color_discrete(
+    name = "Actual  Class",
+    labels = c("Breakfast", "Lunch")) # New legend values
+```
+
+Row
+-------------------------------------
+
+### Confusion Matrix
+
+Finally we show a confusion matrix below,
+
+Row 
+-------------------------------------
+
+### Confusion Matrix
+
+```{r}
+confusion_mat_df <- as.data.frame(confusion_mat)
+colnames(confusion_mat_df) <- c("Prediction", "Reference", "Amount")
+
+kable(confusion_mat_df, caption="Confusion Matrix")
+```
+
+Multiple Regression Model
+=======================================================================
+
+Row
+-------------------------------------
+
+### Background & Write-up
+
+The research question we composed for the multiple regression part of the project was the following,
+
+"Is the amount of calories within a food porportional to the amount of carbohydrates, fat, and protein within that food?" and "If so can the amount of carbohydrates, fat, and protein be used to estimate the amount of calories that food has?"
+
+The research that relates the high amount of carbohydrates, fat, and protein to a high amount of calories is reproduced below.
+
+https://www.webmd.com/diet/foods-high-in-carbs
+https://www.medicalnewstoday.com/articles/calorie-dense-food#summary
+https://health.clevelandclinic.org/high-calorie-snack-ideas-for-weight-gain
+
+We thereafter decided to train a multiple regression model to see if we can reliably estimate the amount of calories a food contains given the amount of carbohydrates, fat, and protein within the food.
+
+Row
+-------------------------------------
+
+### Data Exploration: Correlation
+
+To begin we determined if these classes at least correlated with the amount of calories within the food. To do that we explored the data and confirmed that all metrics had a positive correlation with calorie amount. The outcome of this data exploration is reproduced below.
+
+Row
+-------------------------------------
+
+### Data Exploration: Correlation
+
+```{r}
+
+ggpairs(dr2iff, columns = c("DR2ICARB", "DR2ISFAT","DR2IPFAT", "DR2IKCAL", "DR2IPROT"))
+
+```
+
+
+Row
+-------------------------------------
+
+### Multiple Regression Model
+
+```{r}
+
+train_set_80 <- train_set_80[c("DR2IKCAL","DR2ICARB","DR2ISFAT","DR2IPFAT","DR2IPROT")]
+
+test_set_20 <- test_set_20[c("DR2IKCAL","DR2ICARB","DR2ISFAT","DR2IPFAT","DR2IPROT")]
+
+modfit <- lm(DR2IKCAL ~ ., data = train_set_80)
+
+```
+
+Row
+-------------------------------------
+
+### Calculating MSE
+
+```{r}
+MSE_tr_80 <- mean((train_set_80$DR2IKCAL - predict(modfit, newdata = train_set_80) )^2, na.rm = TRUE)
+
+MSE_te_20 <- mean((test_set_20$DR2IKCAL - predict(modfit, newdata = test_set_20) )^2, na.rm = TRUE)
+
+MSE_tr_80
+MSE_te_20
+```
+
+

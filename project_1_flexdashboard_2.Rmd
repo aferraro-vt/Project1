@@ -1,0 +1,21 @@
+---
+title: "Focal Chart (Top)"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: scroll
+---
+
+Logistic Regression
+=======================================================================
+
+Row 
+-------------------------------------
+
+### Background & Write-up
+
+The research question that we proposed for building the k-nearest neighbors (kNN) classification model, is the following question:
+
+
+
+

@@ -210,7 +210,9 @@ Row
 
 ### Data Exploration: Correlation
 
-To begin we determined if these classes at least correlated with the amount of calories within the food. To do that we explored the data and confirmed that all metrics had a positive correlation with calorie amount. The outcome of this data exploration is reproduced below.
+To begin we determined if these classes at least correlated with the amount of calories within the food. To do that we explored the data and confirmed that all metrics had a positive correlation with calorie amount. While there is a low correlation value between the classes there is a high amount of correlation of classes relative to the kcal class.
+
+The outcome of this data exploration is reproduced below.
 
 Row
 -------------------------------------
@@ -223,11 +225,17 @@ ggpairs(dr2iff, columns = c("DR2ICARB", "DR2ISFAT","DR2IPFAT", "DR2IKCAL", "DR2I
 
 ```
 
-
 Row
 -------------------------------------
 
 ### Multiple Regression Model
+
+We thereafter used these classes to build a multiple linear regression model. The results of the model is shown below. This is the predicted plot of the test set. We used the carbohydrates class as a placeholder for the x-axis.
+
+Row
+-------------------------------------
+
+### Multiple Regression Model: Predicted Values
 
 ```{r}
 
@@ -237,7 +245,37 @@ test_set_20 <- test_set_20[c("DR2IKCAL","DR2ICARB","DR2ISFAT","DR2IPFAT","DR2IPR
 
 modfit <- lm(DR2IKCAL ~ ., data = train_set_80)
 
+test_set_20$PRED_KCAL <- predict(modfit, newdata=test_set_20)
+
+ggplot(test_set_20, aes(x=DR2ICARB, y=PRED_KCAL)) + geom_point() 
+
 ```
+
+Row
+-------------------------------------
+
+### Multiple Regression Model: Actual Values
+
+The actual values in the model are shown below. This is the truth data that we can use to compare the predicted models in the previous plot.
+
+Row
+-------------------------------------
+
+### Multiple Regression Model: Actual Values
+
+```{r}
+
+ggplot(test_set_20, aes(x=DR2ICARB, y=DR2IKCAL)) + geom_point() 
+
+```
+
+Row
+-------------------------------------
+
+### MSE Values
+
+Below are the MSE values for the training set and the test set.
+
 
 Row
 -------------------------------------
@@ -249,8 +287,18 @@ MSE_tr_80 <- mean((train_set_80$DR2IKCAL - predict(modfit, newdata = train_set_8
 
 MSE_te_20 <- mean((test_set_20$DR2IKCAL - predict(modfit, newdata = test_set_20) )^2, na.rm = TRUE)
 
-MSE_tr_80
-MSE_te_20
+#MSE_tr_80
+#MSE_te_20
+
+colName1 <- "MSE Training"
+colName2 <- "MSE Test"
+
+table_df <- data.frame(colName1 = MSE_tr_80, colName2 = MSE_te_20)
+
+colnames(table_df) <- c(colName1, colName2)
+
+kable(table_df, caption="MSE Values")
+
 ```
 
 

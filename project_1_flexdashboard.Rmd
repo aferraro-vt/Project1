@@ -300,5 +300,78 @@ colnames(table_df) <- c(colName1, colName2)
 kable(table_df, caption="MSE Values")
 
 ```
+Logistic Regression
+=======================================================================
+
+Row 
+-------------------------------------
+
+### Background & Write-up
+
+For the logistic regression model we tailored the research question to reflect the binary nature of the model. In order to do that we cleaned the data by changing the location of food class into a binary is fastfood or isn't fastfood. With that done we posed the research question,
+
+"Is it possible to identify whether food was eaten at a fastfood place or not depending on the calroic/nurition values associated with fastfood?"
+
+We used similar metrics as defined by the prior research question: cholesterol, carbohydrates, and total amount of fat within the food. The citation that we can relate these metrics to unhealthy foods is reproduced below. 
+
+https://www.betterhealth.vic.gov.au/health/conditionsandtreatments/cholesterol-healthy-eating-tips
+
+With that in mind we trained a logistic regression model using those multiple classes. The results are reproduced below. We have several plots showing a logistic regression model fitted onto the data as well as a plot that shows the logistic regression coefficents.
+
+The plot below is showcasing the logistic regression model in respect the predicted values and the amount of carbohydrates within the food.
+
+Row 
+-------------------------------------
+
+### Plots
+
+```{r}
+
+
+#Import Libraries
+library(haven)
+library(ggplot2)
+library(FNN)
+library(dplyr)
+library(plotly)
+library(plyr)
+library(GGally)
+library(flexdashboard)
+library(knitr)
+library(kableExtra)
+
+set.seed(145)
+
+# Import file
+dr2iff <- read_xpt("DR2IFF_I.xpt")
+
+library(pROC)
+
+dr2iff <- dr2iff[dr2iff$DR2ICARB <= 500, ]
+
+dr2iff <- dr2iff[dr2iff$DR2ICHOL <= 1000, ]
+
+dr2iff$fastfood <- ifelse(dr2iff$DR2FS == 3, 1, 0)
+
+print(dr2iff)
+
+print(sum(dr2iff$fastfood == 1, na.rm = TRUE))
+
+fastfood_glm <- glm(fastfood ~ DR2ICARB + DR2ITFAT + DR2ICHOL, data=dr2iff, family = binomial)
+
+pred <- predict(fastfood_glm, type = "response")
+
+pred_list <- ifelse(pred > 0.5, 1, 0)
+
+accuracy <- sum(pred_list == dr2iff$fastfood, na.rm = TRUE) / length(dr2iff$fastfood[!is.na(dr2iff$fastfood)])
+
+dr2iff_cleaned <- subset(dr2iff, !is.na(fastfood))
+
+dr2iff_cleaned$predict <- pred_list
+
+ggplot(dr2iff_cleaned, aes(x = DR2ICARB, y = fastfood)) + geom_point(aes(color = fastfood), position = position_jitter(height = 0.03, width = 0)) + geom_smooth(method = "glm", method.args = list(family="binomial")) + theme_bw()
+
+
+```
 
 

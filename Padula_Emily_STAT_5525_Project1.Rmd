@@ -1,0 +1,1300 @@
+---
+title: "Dietary Data Survey Analysis"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: scroll
+---
+Abstract
+=======================================================================
+
+The following data analysis studies the dietary intake information from a 2015-2016 Dietary Data survey by the CDC. The following data techniques are used to explore various relationships between nutritional information and dietary consumption patterns.
+
+kNN
+
+Multiple Regression
+
+Logistic Regression
+
+Naive Bayes
+
+LOESS Fit
+
+Natural Cubic Spline
+
+kNN is used to differentiate between breakfast and lunch via various nutritional values. Multiple Regression was used to determine whether the amount of calories in food is correlated to the amount of carbs, fats, and proteins in the food. Logistic regression was used to predict whether a food was from a fastfood place according to its nutritional values. Naive Bayes was used to classify whether a food was eaten at breakfast, lunch, or dinner based on its calorie count. A LOESS fit was used to model the protein intake of people on diets. Finally, a Natural Cubic Spline was used to analyze how the caloric value of consumed foods changes throughout the day. The results of these studies can be viewed in the appropriately marked tabs.
+
+Introduction
+=======================================================================
+
+Row {data-width=600}
+-------------------------------------
+
+### Data Set Background
+
+This data set comes from the CDC and is the 2015-2016 Dietary Data from the National Heath and Nutrition Examination Survey. A link to the data source is found below:
+
+https://wwwn.cdc.gov/nchs/nhanes/search/datapage.aspx?Component=Dietary&CycleBeginYear=2015
+
+The purpose of this data set was to interview and record the dietary intake information from participants in the National Heath and Nutrition Examination Survey. People were interviewed twice about their dietary intake in the previous 24 hours. The first interview was conducted in person and the second was conducted via telephone 3 to 10 days later. 
+
+There were multiple data sets archived in this source, but this study only uses the Individual Foods and Total Nutrient Intakes data sets for analysis. The variables in each of these data sets are described in the following data dictionary.
+
+Overall, the goal the this analysis is to look at food consumption habits of the people in this survey, including what they ate at certain meals or the relationships between various nutrients consumed throughout the day. 
+
+
+Row {data-width=600}
+-------------------------------------
+
+### Data Dictionary
+
+**From the DR2IFF_I data set:
+
+SEQN - Respondent sequence number
+
+WTDRD1 - Dietary day one sample weight
+
+WTDR2D - Dietary two-day sample weight
+
+DR2ILINE - Food/Individual component number
+
+DR2DRSTZ - Dietary recall status
+
+DR2EXMER - Interviewer ID code
+
+DRABF - Breast-fed infant (either day)
+
+DRDINT - Number of days of intake
+
+DR2DBIH - # of days b/w intake and HH interview
+
+DR2DAY - Intake day of the week
+
+DR2LANG - Language respondent used mostly
+
+DR2CCMNM - Combination food number
+
+DR2CCMTX - Combination food type
+
+DR2_020 - Time of eating occasion (HH:MM)
+
+DR2_030Z - Name of eating occasion
+
+DR2FS - Source of food
+
+DR2_040Z - Did you eat this meal at home?
+
+DR2IFDCD - USDA food code
+
+DR2IGRMS - Grams
+
+DR2IKCAL - Energy (kcal)
+
+DR2IPROT - Protein (gm)
+
+DR2ICARB - Carbohydrate (gm)
+
+DR2ISUGR - Total sugars (gm)
+
+DR2IFIBE - Dietary fiber (gm)
+
+DR2ITFAT - Total fat (gm)
+
+DR2ISFAT - Total saturated fatty acids (gm)
+
+DR2IMFAT - Total monounsaturated fatty acids (gm)
+
+DR2IPFAT - Total polyunsaturated fatty acids (gm)
+
+DR2ICHOL - Cholesterol (mg)
+
+DR2IATOC - Vitamin E as alpha-tocopherol (mg)
+
+DR2IATOA - Added alpha-tocopherol (Vitamin E) (mg)
+
+DR2IRET - Retinol (mcg)
+
+DR2IVARA - Vitamin A, RAE (mcg)
+
+DR2IACAR - Alpha-carotene (mcg)
+
+DR2IBCAR - Beta-carotene (mcg)
+
+DR2ICRYP - Beta-cryptoxanthin (mcg)
+
+DR2ILYCO - Lycopene (mcg)
+
+DR2ILZ - Lutein + zeaxanthin (mcg)
+
+DR2IVB1 - Thiamin (Vitamin B1) (mg)
+
+DR2IVB2 - Riboflavin (Vitamin B2) (mg)
+
+DR2INIAC - Niacin (mg)
+
+DR2IVB6 - Vitamin B6 (mg)
+
+DR2IFOLA - Total folate (mcg)
+
+DR2IFA - Folic acid (mcg)
+
+DR2IFF - Food folate (mcg)
+
+DR2IFDFE - Folate, DFE (mcg)
+
+DR2ICHL - Total choline (mg)
+
+DR2IVB12 - Vitamin B12 (mcg)
+
+DR2IB12A - Added vitamin B12 (mcg)
+
+DR2IVC - Vitamin C (mg)
+
+DR2IVD - Vitamin D (D2 + D3) (mcg)
+
+DR2IVK - Vitamin K (mcg)
+
+DR2ICALC - Calcium (mg)
+
+DR2IPHOS - Phosphorus (mg)
+
+DR2IMAGN - Magnesium (mg)
+
+DR2IIRON - Iron (mg)
+
+DR2IZINC - Zinc (mg)
+
+DR2ICOPP - Copper (mg)
+
+DR2ISODI - Sodium (mg)
+
+DR2IPOTA - Potassium (mg)
+
+DR2ISELE - Selenium (mcg)
+
+DR2ICAFF - Caffeine (mg)
+
+DR2ITHEO - Theobromine (mg)
+
+DR2IALCO - Alcohol (gm)
+
+DR2IMOIS - Moisture (gm)
+
+DR2IS040 - SFA 4:0 (Butanoic) (gm)
+
+DR2IS060 - SFA 6:0 (Hexanoic) (gm)
+
+DR2IS080 - SFA 8:0 (Octanoic) (gm)
+
+DR2IS100 - SFA 10:0 (Decanoic) (gm)
+
+DR2IS120 - SFA 12:0 (Dodecanoic) (gm)
+
+DR2IS140 - SFA 14:0 (Tetradecanoic) (gm)
+
+DR2IS160 - SFA 16:0 (Hexadecanoic) (gm)
+
+DR2IS180 - SFA 18:0 (Octadecanoic) (gm)
+
+DR2IM161 - MFA 16:1 (Hexadecenoic) (gm)
+
+DR2IM181 - MFA 18:1 (Octadecenoic) (gm)
+
+DR2IM201 - MFA 20:1 (Eicosenoic) (gm)
+
+DR2IM221 - MFA 22:1 (Docosenoic) (gm)
+
+DR2IP182 - PFA 18:2 (Octadecadienoic) (gm)
+
+DR2IP183 - PFA 18:3 (Octadecatrienoic) (gm)
+
+DR2IP184 - PFA 18:4 (Octadecatetraenoic) (gm)
+
+DR2IP204 - PFA 20:4 (Eicosatetraenoic) (gm)
+
+DR2IP205 - PFA 20:5 (Eicosapentaenoic) (gm)
+
+DR2IP225 - PFA 22:5 (Docosapentaenoic) (gm)
+
+DR2IP226 - PFA 22:6 (Docosahexaenoic) (gm)
+
+
+
+**From the DR1TOT_I data set
+
+SEQN - Respondent sequence number
+
+WTDRD1 - Dietary day one sample weight
+
+WTDR2D - Dietary two-day sample weight
+
+DR1DRSTZ - Dietary recall status
+
+DR1EXMER - Interviewer ID code
+
+DRABF - Breast-fed infant (either day)
+
+DRDINT - Number of days of intake
+
+DR1DBIH - # of days b/w intake and HH interview
+
+DR1DAY - Intake day of the week
+
+DR1LANG - Language respondent used mostly
+
+DR1MRESP - Main respondent for this interview
+
+DR1HELP - Helped in responding for this interview
+
+DBQ095Z - Type of table salt used
+
+DBD100 - How often add salt to food at table
+
+DRQSPREP - Salt used in preparation?
+
+DR1STY - Salt used at table yesterday?
+
+DR1SKY - Type of salt used yesterday
+
+DRQSDIET - On special diet?
+
+DRQSDT1 - Weight loss/Low calorie diet
+
+DRQSDT2 - Low fat/Low cholesterol diet
+
+DRQSDT3 - Low salt/Low sodium diet
+
+DRQSDT4 - Sugar free/Low sugar diet
+
+DRQSDT5 - Low fiber diet
+
+DRQSDT6 - High fiber diet
+
+DRQSDT7 - Diabetic diet
+
+DRQSDT8 - Weight gain/Muscle building diet
+
+DRQSDT9 - Low carbohydrate diet
+
+DRQSDT10 - High protein diet
+
+DRQSDT11 - Gluten-free/Celiac diet
+
+DRQSDT12 - Renal/Kidney diet
+
+DRQSDT91 - Other special diet
+
+DR1TNUMF - Number of foods/beverages reported
+
+DR1TKCAL - Energy (kcal)
+
+DR1TPROT - Protein (gm)
+
+DR1TCARB - Carbohydrate (gm)
+
+DR1TSUGR - Total sugars (gm)
+
+DR1TFIBE - Dietary fiber (gm)
+
+DR1TTFAT - Total fat (gm)
+
+DR1TSFAT - Total saturated fatty acids (gm)
+
+DR1TMFAT - Total monounsaturated fatty acids (gm)
+
+DR1TPFAT - Total polyunsaturated fatty acids (gm)
+
+DR1TCHOL - Cholesterol (mg)
+
+DR1TATOC - Vitamin E as alpha-tocopherol (mg)
+
+DR1TATOA - Added alpha-tocopherol (Vitamin E) (mg)
+
+DR1TRET - Retinol (mcg)
+
+DR1TVARA - Vitamin A, RAE (mcg)
+
+DR1TACAR - Alpha-carotene (mcg)
+
+DR1TBCAR - Beta-carotene (mcg)
+
+DR1TCRYP - Beta-cryptoxanthin (mcg)
+
+DR1TLYCO - Lycopene (mcg)
+
+DR1TLZ - Lutein + zeaxanthin (mcg)
+
+DR1TVB1 - Thiamin (Vitamin B1) (mg)
+
+DR1TVB2 - Riboflavin (Vitamin B2) (mg)
+
+DR1TNIAC - Niacin (mg)
+
+DR1TVB6 - Vitamin B6 (mg)
+
+DR1TFOLA - Total folate (mcg)
+
+DR1TFA - Folic acid (mcg)
+
+DR1TFF - Food folate (mcg)
+
+DR1TFDFE - Folate, DFE (mcg)
+
+DR1TCHL - Total choline (mg)
+
+DR1TVB12 - Vitamin B12 (mcg)
+
+DR1TB12A - Added vitamin B12 (mcg)
+
+DR1TVC - Vitamin C (mg)
+
+DR1TVD - Vitamin D (D2 + D3) (mcg)
+
+DR1TVK - Vitamin K (mcg)
+
+DR1TCALC - Calcium (mg)
+
+DR1TPHOS - Phosphorus (mg)
+
+DR1TMAGN - Magnesium (mg)
+
+DR1TIRON - Iron (mg)
+
+DR1TZINC - Zinc (mg)
+
+DR1TCOPP - Copper (mg)
+
+DR1TSODI - Sodium (mg)
+
+DR1TPOTA - Potassium (mg)
+
+DR1TSELE - Selenium (mcg)
+
+DR1TCAFF - Caffeine (mg)
+
+DR1TTHEO - Theobromine (mg)
+
+DR1TALCO - Alcohol (gm)
+
+DR1TMOIS - Moisture (gm)
+
+DR1TS040 - SFA 4:0 (Butanoic) (gm)
+
+DR1TS060 - SFA 6:0 (Hexanoic) (gm)
+
+DR1TS080 - SFA 8:0 (Octanoic) (gm)
+
+DR1TS100 - SFA 10:0 (Decanoic) (gm)
+
+DR1TS120 - SFA 12:0 (Dodecanoic) (gm)
+
+DR1TS140 - SFA 14:0 (Tetradecanoic) (gm)
+
+DR1TS160 - SFA 16:0 (Hexadecanoic) (gm)
+
+DR1TS180 - SFA 18:0 (Octadecanoic) (gm)
+
+DR1TM161 - MFA 16:1 (Hexadecenoic) (gm)
+
+DR1TM181 - MFA 18:1 (Octadecenoic) (gm)
+
+DR1TM201 - MFA 20:1 (Eicosenoic) (gm)
+
+DR1TM221 - MFA 22:1 (Docosenoic) (gm)
+
+DR1TP182 - PFA 18:2 (Octadecadienoic) (gm)
+
+DR1TP183 - PFA 18:3 (Octadecatrienoic) (gm)
+
+DR1TP184 - PFA 18:4 (Octadecatetraenoic) (gm)
+
+DR1TP204 - PFA 20:4 (Eicosatetraenoic) (gm)
+
+DR1TP205 - PFA 20:5 (Eicosapentaenoic) (gm)
+
+DR1TP225 - PFA 22:5 (Docosapentaenoic) (gm)
+
+DR1TP226 - PFA 22:6 (Docosahexaenoic) (gm)
+
+DR1_300 - Compare food consumed yesterday to usual
+
+DR1_320Z - Total plain water drank yesterday (gm)
+
+DR1_330Z - Total tap water drank yesterday (gm)
+
+DR1BWATZ - Total bottled water drank yesterday (gm)
+
+DR1TWS - Tap water source
+
+DRD340 - Shellfish eaten during past 30 days
+
+DRD350A - Clams eaten during past 30 days
+
+DRD350AQ - # of times clams eaten in past 30 days
+
+DRD350B - Crabs eaten during past 30 days
+
+DRD350BQ - # of times crabs eaten in past 30 days
+
+DRD350C - Crayfish eaten during past 30 days
+
+DRD350CQ - # of times crayfish eaten past 30 days
+
+DRD350D - Lobsters eaten during past 30 days
+
+DRD350DQ - # of times lobsters eaten past 30 days
+
+DRD350E - Mussels eaten during past 30 days
+
+DRD350EQ - # of times mussels eaten in past 30 days
+
+DRD350F - Oysters eaten during past 30 days
+
+DRD350FQ - # of times oysters eaten in past 30 days
+
+DRD350G - Scallops eaten during past 30 days
+
+DRD350GQ - # of times scallops eaten past 30 days
+
+DRD350H - Shrimp eaten during past 30 days
+
+DRD350HQ - # of times shrimp eaten in past 30 days
+
+DRD350I - Other shellfish eaten past 30 days
+
+DRD350IQ - # of times other shellfish eaten
+
+DRD350J - Other unknown shellfish eaten past 30 days
+
+DRD350JQ - # of times other unknown shellfish eaten
+
+DRD350K - Refused on shellfish eaten past 30 days
+
+DRD360 - Fish eaten during past 30 days
+
+DRD370A - Breaded fish products eaten past 30 days
+
+DRD370AQ - # of times breaded fish products eaten
+
+DRD370B - Tuna eaten during past 30 days
+
+DRD370BQ - # of times tuna eaten in past 30 days
+
+DRD370C - Bass eaten during past 30 days
+
+DRD370CQ - # of times bass eaten in past 30 days
+
+DRD370D - Catfish eaten during past 30 days
+
+DRD370DQ - # of times catfish eaten in past 30 days
+
+DRD370E - Cod eaten during past 30 days
+
+DRD370EQ - # of times cod eaten in past 30 days
+
+DRD370F - Flatfish eaten during past 30 days
+
+DRD370FQ - # of times flatfish eaten past 30 days
+
+DRD370G - Haddock eaten during past 30 days
+
+DRD370GQ - # of times haddock eaten in past 30 days
+
+DRD370H - Mackerel eaten during past 30 days
+
+DRD370HQ - # of times mackerel eaten past 30 days
+
+DRD370I - Perch eaten during past 30 days
+
+DRD370IQ - # of times perch eaten in past 30 days
+
+DRD370J - Pike eaten during past 30 days
+
+DRD370JQ - # of times pike eaten in past 30 days
+
+DRD370K - Pollock eaten during past 30 days
+
+DRD370KQ - # of times pollock eaten in past 30 days
+
+DRD370L - Porgy eaten during past 30 days
+
+DRD370LQ - # of times porgy eaten in past 30 days
+
+DRD370M - Salmon eaten during past 30 days
+
+DRD370MQ - # of times salmon eaten in past 30 days
+
+DRD370N - Sardines eaten during past 30 days
+
+DRD370NQ - # of times sardines eaten past 30 days
+
+DRD370O - Sea bass eaten during past 30 days
+
+DRD370OQ - # of times sea bass eaten past 30 days
+
+DRD370P - Shark eaten during past 30 days
+
+DRD370PQ - # of times shark eaten in past 30 days
+
+DRD370Q - Swordfish eaten during past 30 days
+
+DRD370QQ - # of times swordfish eaten past 30 days
+
+DRD370R - Trout eaten during past 30 days
+
+DRD370RQ - # of times trout eaten in past 30 days
+
+DRD370S - Walleye eaten during past 30 days
+
+DRD370SQ - # of times walleye eaten in past 30 days
+
+DRD370T - Other fish eaten during past 30 days
+
+DRD370TQ - # of times other fish eaten past 30 days
+
+DRD370U - Other unknown fish eaten in past 30 days
+
+DRD370UQ - # of times other unknown fish eaten
+
+DRD370V - Refused on fish eaten past 30 days
+
+KNN Model
+=======================================================================
+
+Row {data-width=600}
+-------------------------------------
+
+### Background & Write-up
+
+The research question that we proposed for building the k-nearest neighbors (kNN) classification model, is the following question:
+
+"Is it possible to determine whether a person is consuming their meal at breakfast or lunch based on the caloric and nutrition values of that meal alone?"
+
+In order to explore this we first did some preliminary research online to identify nutrition categories or values that we can use to potentially differentiate breakfast from lunch. Thereafter we confirmed if these metrics were discernable in the dataset by determining if we could visually identify distinct clusters for breakfast and lunch foods for certain nutrition metrics. We identified that cholesterol, sugar, and amount of grams were classes that could be used to differentiate the two.
+
+Compared to breakfast foods, lunch foods are known to include bigger portions, have a higher portion of cholesterol, and a lower amount of sugar. The citations/research that we used to justify these claims are reproduced below.
+
+Lunch foods are typically more composed "unhealthy fats" that include processed or deli-style meats, processed foods, and takeaway foods. All of these types of foods are related to high amounts of cholesterol. This difference between breakfast foods and lunch foods makes it an ideal metric to differentiate whether a food was consumed during breakfast or lunch. 
+
+https://www.betterhealth.vic.gov.au/health/conditionsandtreatments/cholesterol-healthy-eating-tips
+
+Typically breakfast meals are low in calories when contrasted with lunch meals. Breakfast meals typically are 300-400 calories while lunch can be anywhere between 500-700 calories. This difference in calories can be related to the grams of the meal itself. The more calories the heavier the food would have to be. Therefore one of the classes we chose to differentiate breakfast and lunch was the amount of grams of the food that was consumed (DR2IGRMS).
+
+https://globalnews.ca/news/3615212/this-is-what-your-breakfast-lunch-and-dinner-calories-actually-look-like/
+    
+For the last class we chose sugars as another indicator of whether a food was consumed during breakfast or lunch. As reported by Harvard School of Public Health, added sugars are high in breakfast cereals. With this in mind, we speculated that the total sugar content within the food consumed would be a reasonable indicator for whether a meal was eaten during breakfast or for lunch. The higher the amount of sugars, proportional to the same amount of weight, was related to breakfast foods while the inverse was related to lunch foods. We explored the data and did find this to be partially true. Breakfast foods showed a slight difference in lunch foods when indexed for sugar (DR2ISUGR).
+  
+https://nutritionsource.hsph.harvard.edu/carbohydrates/added-sugar-in-the-diet/
+
+    
+Row {data-width=600}
+-------------------------------------
+
+### Data Exploration: Cholesterol 
+
+```{r}
+
+#Import Libraries
+library(haven)
+library(ggplot2)
+library(FNN)
+library(dplyr)
+library(plotly)
+library(plyr)
+library(GGally)
+library(flexdashboard)
+library(knitr)
+library(kableExtra)
+
+set.seed(145)
+
+# Import file
+dr2iff <- read_xpt("DR2IFF_I.xpt")
+#summary(dr2iff)
+
+splitOccasion <- split(dr2iff, f=factor(dr2iff$DR2_030Z))
+breakfastOccasion <- splitOccasion$"1"
+lunchOccasion <- splitOccasion$"2"
+dinnerOccasion <- splitOccasion$"3"
+cleaned_dr2iff <- dr2iff[dr2iff$DR2_030Z <= 2, ]
+
+cleaned_dr2iff <- cleaned_dr2iff %>% filter(!is.na(DR2ISUGR) & !is.na(DR2ITFAT) & !is.na(DR2ICHOL) & !is.na(DR2_030Z) & !is.na(DR2IGRMS))
+
+amount_80 <- nrow(cleaned_dr2iff) * 0.80
+
+indexes <- seq_len(nrow(cleaned_dr2iff))
+
+train_indexes <- sample(indexes, size=amount_80)
+
+train_set_80 <- cleaned_dr2iff[train_indexes, ]
+test_set_20  <- cleaned_dr2iff[-train_indexes, ]
+
+temp_cleaned_dr2iff <- cleaned_dr2iff
+temp_cleaned_dr2iff$DR2_030Z <- as.factor(temp_cleaned_dr2iff$DR2_030Z)
+
+ggplot(temp_cleaned_dr2iff, aes(x=DR2ICHOL, y=DR2IGRMS, col=DR2_030Z)) + geom_point() + xlim(0, 1000) + ylim(0, 1000) + scale_color_discrete(name = "Original Data", labels = c("Breakfast", "Lunch")) # New legend values
+
+```
+
+Row {data-width=600}
+-------------------------------------
+
+### Data Exploration: Total Fat 
+
+```{r}
+
+ggplot(temp_cleaned_dr2iff, aes(x=DR2ITFAT, y=DR2IGRMS, col=DR2_030Z)) + geom_point() + xlim(0, 100) + ylim(0, 1000) + scale_color_discrete(name = "Original Data", labels = c("Breakfast", "Lunch")) # New legend values
+
+```
+
+
+Row {data-width=600}
+-------------------------------------
+
+### Data Exploration: Sugar 
+
+```{r}
+
+ggplot(temp_cleaned_dr2iff, aes(x=DR2ISUGR, y=DR2IGRMS, col=DR2_030Z)) + geom_point() + xlim(0, 100) + ylim(0, 1000) + scale_color_discrete(name = "Original Data", labels = c("Breakfast", "Lunch")) # New legend values
+
+```
+
+Row 
+-------------------------------------
+
+### Building the Model
+
+Once confirming there were visible differences between all three classes for breakfast and lunch we then continued to build a k-nearest neighbors model to predict whether a food was consumed breakfast or lunch based on sugar content, grams of food, amount of fat, and amount of cholesterol.
+    
+We trained the model and we got the results below. The plot is for only 20% of the original data (the test set) and it shows whether it classified the food as consumed during breakfast or lunch.  
+  
+Row
+-------------------------------------
+
+### Building the Model
+
+```{r, fig.width=6, fig.height=4}
+
+train_features <- train_set_80[, c("DR2ICHOL","DR2IGRMS","DR2ISUGR","DR2ITFAT")]
+test_features <- test_set_20[, c("DR2ICHOL","DR2IGRMS","DR2ISUGR","DR2ITFAT")]
+
+train_classes <- train_set_80$DR2_030Z
+test_classes <- test_set_20$DR2_030Z
+
+knn_classes_output <- knn(train=train_features, test=test_features, cl=train_classes, k=5)
+
+confusion_mat <- table("Predicted Classes" = knn_classes_output, "Actual Classes" = test_classes)
+
+#sum(knn_classes_output == test_classes) / length(test_classes)
+
+#ggplot(test_set_20, aes(x=DR2ICHOL, y=DR2IGRMS, col=knn_classes_output)) + geom_point() + xlim(0, 1000) + ylim(0, 1000) + labs(col = "New Legend Name")
+
+ggplot(test_set_20, aes(x=DR2ICHOL, y=DR2IGRMS, col=knn_classes_output)) + geom_point() + xlim(0, 1000) + ylim(0, 1000) + scale_color_discrete(
+    name = "Predict Class",
+    labels = c("Breakfast", "Lunch") # New legend values
+  )
+
+
+```
+
+Row 
+-------------------------------------
+
+### Inspection
+
+Here is the truth data of that trainig set to compare the predicted values.
+
+Row {data-width=600}
+-------------------------------------
+
+### Chart 1
+
+```{r, fig.width=6, fig.height=4}
+temp_test_set_20 <- test_set_20
+temp_test_set_20$DR2_030Z <- as.factor(temp_test_set_20$DR2_030Z)
+
+ggplot(temp_test_set_20, aes(x=DR2ICHOL, y=DR2IGRMS, col=DR2_030Z)) + geom_point() + xlim(0, 1000) + ylim(0, 1000) + scale_color_discrete(
+    name = "Actual  Class",
+    labels = c("Breakfast", "Lunch")) # New legend values
+```
+
+Row
+-------------------------------------
+
+### Confusion Matrix
+
+Finally we show a confusion matrix below,
+
+Row 
+-------------------------------------
+
+### Confusion Matrix
+
+```{r}
+confusion_mat_df <- as.data.frame(confusion_mat)
+colnames(confusion_mat_df) <- c("Prediction", "Reference", "Amount")
+
+kable(confusion_mat_df, caption="Confusion Matrix")
+```
+
+Multiple Regression Model
+=======================================================================
+
+Row
+-------------------------------------
+
+### Background & Write-up
+
+The research question we composed for the multiple regression part of the project was the following,
+
+"Is the amount of calories within a food porportional to the amount of carbohydrates, fat, and protein within that food?" and "If so can the amount of carbohydrates, fat, and protein be used to estimate the amount of calories that food has?"
+
+The research that relates the high amount of carbohydrates, fat, and protein to a high amount of calories is reproduced below.
+
+https://www.webmd.com/diet/foods-high-in-carbs
+https://www.medicalnewstoday.com/articles/calorie-dense-food#summary
+https://health.clevelandclinic.org/high-calorie-snack-ideas-for-weight-gain
+
+We thereafter decided to train a multiple regression model to see if we can reliably estimate the amount of calories a food contains given the amount of carbohydrates, fat, and protein within the food.
+
+Row
+-------------------------------------
+
+### Data Exploration: Correlation
+
+To begin we determined if these classes at least correlated with the amount of calories within the food. To do that we explored the data and confirmed that all metrics had a positive correlation with calorie amount. While there is a low correlation value between the classes there is a high amount of correlation of classes relative to the kcal class.
+
+The outcome of this data exploration is reproduced below.
+
+Row
+-------------------------------------
+
+### Data Exploration: Correlation
+
+```{r}
+
+ggpairs(dr2iff, columns = c("DR2ICARB", "DR2ISFAT","DR2IPFAT", "DR2IKCAL", "DR2IPROT"))
+
+```
+
+Row
+-------------------------------------
+
+### Multiple Regression Model
+
+We thereafter used these classes to build a multiple linear regression model. The results of the model is shown below. This is the predicted plot of the test set. We used the carbohydrates class as a placeholder for the x-axis.
+
+Row
+-------------------------------------
+
+### Multiple Regression Model: Predicted Values
+
+```{r}
+
+train_set_80 <- train_set_80[c("DR2IKCAL","DR2ICARB","DR2ISFAT","DR2IPFAT","DR2IPROT")]
+
+test_set_20 <- test_set_20[c("DR2IKCAL","DR2ICARB","DR2ISFAT","DR2IPFAT","DR2IPROT")]
+
+modfit <- lm(DR2IKCAL ~ ., data = train_set_80)
+
+test_set_20$PRED_KCAL <- predict(modfit, newdata=test_set_20)
+
+ggplot(test_set_20, aes(x=DR2ICARB, y=PRED_KCAL)) + geom_point() 
+
+```
+
+Row
+-------------------------------------
+
+### Multiple Regression Model: Actual Values
+
+The actual values in the model are shown below. This is the truth data that we can use to compare the predicted models in the previous plot.
+
+Row
+-------------------------------------
+
+### Multiple Regression Model: Actual Values
+
+```{r}
+
+ggplot(test_set_20, aes(x=DR2ICARB, y=DR2IKCAL)) + geom_point() 
+
+```
+
+Row
+-------------------------------------
+
+### MSE Values
+
+Below are the MSE values for the training set and the test set.
+
+
+Row
+-------------------------------------
+
+### Calculating MSE
+
+```{r}
+MSE_tr_80 <- mean((train_set_80$DR2IKCAL - predict(modfit, newdata = train_set_80) )^2, na.rm = TRUE)
+
+MSE_te_20 <- mean((test_set_20$DR2IKCAL - predict(modfit, newdata = test_set_20) )^2, na.rm = TRUE)
+
+#MSE_tr_80
+#MSE_te_20
+
+colName1 <- "MSE Training"
+colName2 <- "MSE Test"
+
+table_df <- data.frame(colName1 = MSE_tr_80, colName2 = MSE_te_20)
+
+colnames(table_df) <- c(colName1, colName2)
+
+kable(table_df, caption="MSE Values")
+
+```
+Logistic Regression
+=======================================================================
+
+Row 
+-------------------------------------
+
+### Background & Write-up
+
+For the logistic regression model we tailored the research question to reflect the binary nature of the model. In order to do that we cleaned the data by changing the location of food class into a binary is fastfood or isn't fastfood. With that done we posed the research question,
+
+"Is it possible to identify whether food was eaten at a fastfood place or not depending on the calroic/nurition values associated with fastfood?"
+
+We used similar metrics as defined by the prior research question: cholesterol, carbohydrates, and total amount of fat within the food. The citation that we can relate these metrics to unhealthy foods is reproduced below. 
+
+https://www.betterhealth.vic.gov.au/health/conditionsandtreatments/cholesterol-healthy-eating-tips
+
+With that in mind we trained a logistic regression model using those multiple classes. The results are reproduced below. We have several plots showing a logistic regression model fitted onto the data as well as a plot that shows the logistic regression coefficents.
+
+The plot below is showcasing the logistic regression model in respect the predicted values and the amount of carbohydrates within the food.
+
+Row 
+-------------------------------------
+
+### Plots
+
+```{r}
+
+
+#Import Libraries
+library(haven)
+library(ggplot2)
+library(FNN)
+library(dplyr)
+library(plotly)
+library(plyr)
+library(GGally)
+library(flexdashboard)
+library(knitr)
+library(kableExtra)
+
+set.seed(145)
+
+# Import file
+dr2iff <- read_xpt("DR2IFF_I.xpt")
+
+library(pROC)
+
+dr2iff <- dr2iff[dr2iff$DR2ICARB <= 500, ]
+
+dr2iff <- dr2iff[dr2iff$DR2ICHOL <= 1000, ]
+
+dr2iff$fastfood <- ifelse(dr2iff$DR2FS == 3, 1, 0)
+
+print(dr2iff)
+
+print(sum(dr2iff$fastfood == 1, na.rm = TRUE))
+
+fastfood_glm <- glm(fastfood ~ DR2ICARB + DR2ITFAT + DR2ICHOL, data=dr2iff, family = binomial)
+
+pred <- predict(fastfood_glm, type = "response")
+
+pred_list <- ifelse(pred > 0.5, 1, 0)
+
+accuracy <- sum(pred_list == dr2iff$fastfood, na.rm = TRUE) / length(dr2iff$fastfood[!is.na(dr2iff$fastfood)])
+
+dr2iff_cleaned <- subset(dr2iff, !is.na(fastfood))
+
+dr2iff_cleaned$predict <- pred_list
+
+ggplot(dr2iff_cleaned, aes(x = DR2ICARB, y = fastfood)) + geom_point(aes(color = fastfood), position = position_jitter(height = 0.03, width = 0)) + geom_smooth(method = "glm", method.args = list(family="binomial")) + theme_bw()
+
+
+```
+
+
+Naive Bayes Classification
+=======================================================================
+
+Row
+-------------------------------------
+
+### Background & Write-up
+
+The research question we composed for Naive Bayes Classification is the following:
+
+"Are we able to predict whether a meal is for breakfast, lunch, or dinner based off the number of calories in the meal and at what accuracy?"
+
+Breakfast, lunch, and dinner tend to have specific foods that are more often associated with each meal. Additionally, people tend to eat less calories at breakfast and their largest meal at dinner. The following article gives guidelines for how many calories and nutrients people should aim for in each meal of the day according to dietitions.
+
+https://globalnews.ca/news/3615212/this-is-what-your-breakfast-lunch-and-dinner-calories-actually-look-like/#:~:text=Although%20every%20person's%20daily%20caloric,each%20for%20lunch%20and%20dinner.
+
+According to the article, breakfasts should be around 300 to 400 calories, lunch should be around 500 to 700 calories, and dinner should be around 600 to 700 calories. While not everyone follows these portions, it is hypothesized that there is a general trend where people eat the least for breakfast, then lunch, then the most for dinner. Using this relationship, we hope to be able to predict whether someone is eating breakfast, lunch, or dinner based off the number of calories in the meal.
+
+
+Row
+-------------------------------------
+
+### Data Exploration: Priors of Full Data Set
+
+To begin, we isolated just the data that was associated with one of the three meals, breakfast, lunch, or dinner. Then the prior probabilities, the mean calories, and the standard deviation of the calories for each meal were calculated. 
+
+```{r}
+library(knitr)
+library(ggplot2)
+library(tidyverse)
+library(e1071)
+library(haven)
+library(splines)
+library(plyr)
+
+nutrition <- read_xpt("DR2IFF_I.XPT")
+
+#create data frame with just the elements associated with breakfast, lunch, and dinner
+bld <- subset(nutrition, DR2_030Z %in% c(1, 2, 3))
+
+bld[, c(15)] <- sapply(bld[, c(15)], as.factor)
+bld$DR2_030Z <- revalue(bld$DR2_030Z, c("1" = "breakfast", "2" = "lunch", "3" = "dinner"))
+
+#number of data points in each meal category
+meal <- xtabs( ~ DR2_030Z, data = bld)
+
+#prior probabilities of each meal category
+print(prior_meal <- prop.table(meal))
+
+# mean and standard deviation of the calories for each meal
+bld <- bld %>% drop_na(DR2IKCAL)
+print( mu <- with(bld, tapply(DR2IKCAL, DR2_030Z, mean) ) )
+print( sigma <- with(bld, tapply(DR2IKCAL, DR2_030Z, sd) ) )
+
+```
+
+We can see that 31% of the foods are for breakfast, 35% are for lunch, and 33% are for dinner. Breakfast foods average at 112 calories, lunch averages at 136 calories, and dinner averages at 161 calories. 
+
+Row
+-------------------------------------
+
+### Naive Bayes Model and Confusion Matrix
+
+The data was separated into training and testing data at a 70:30 split. We can see the probability tables for training and testing data. A Naive Bayes model was created using the training data and used to predict classes of the testing data. A table showing the actual meal classes and the predicted classes was produced. The correlation matrix is also calculated and about 65% of the foods were misclassified. This mean 45% of the foods were classified as the correct meal. This is not a great classification method, likely because the individual foods rather than the full meals were recorded in the data, so multiple foods could have been eaten together to get the full calorie count of the meal. However, 45% is still a better percentage than than what it would be with random classification rather than the naive bayes model.
+
+```{r}
+set.seed(342)
+#split into training and testing data
+index <- sample(1:nrow(bld), round(nrow(bld) * 0.7))
+training_df <- bld[index, ]
+testing_df <- bld[-index, ]
+
+#isolate the meals in each training and testing data sets
+train_classes <- training_df$DR2_030Z
+test_classes <- testing_df$DR2_030Z
+
+# prior probabilities for the training and testing meals data
+ prop.table(table(train_classes))
+ prop.table(table(test_classes))
+
+ # Naive Bayes model based on training data
+ model2 <- naiveBayes(DR2_030Z ~ DR2IKCAL, data = training_df)
+ 
+ # posterior probabilities for meals in testing data set
+ p2 <- predict(model2, newdata = testing_df, type = "raw")
+ 
+ # meal predictions for testing data based on posterior probabilities
+ predicted_classes <- predict(model2, newdata = testing_df, type = "class")
+ 
+ actual_classes <- testing_df$DR2_030Z
+ 
+ # table of predicted vs actual testing meals
+ tab1 <- table(predicted_classes, actual_classes)
+ kable(tab1, col.names=c("actual breakfast", "actual dinner", "actual lunch"))
+ 
+ # probability table of predicted vs actual testing meals
+ prob_tab1 <- round(prop.table(tab1, margin = 2), 3)
+ 
+kable(prob_tab1, col.names=c("actual breakfast", "actual dinner", "actual lunch"))
+ 
+ # % predicted incorrectly
+ misclass <- (sum(tab1)- sum(diag(tab1))) / sum(tab1)
+misclass
+
+```
+
+Loess Fit
+=======================================================================
+
+Row
+-------------------------------------
+
+### Background & Write-up
+
+For the LOESS Fit, our research question was the following:
+
+"Do people on a diet eat foods with higher protein than people not on a diet?"
+
+A popular diet that is stressed currently is a high protein diet. Protein is known to keep people full for longer, so less calories need to be consumed to feel full throughout the day. Protein is also good for building muscle and keeping people energized for activity throughout the day. High protein, low carb diets are very popular, so it is hypothesized that people on diets are focused on having more protein and less carbs. 
+
+Row
+------------------------------------
+
+### Graphing the Models
+
+The first step is to split the data into training and testing sets at a 70:30 split. From this data, there is not a clear difference in the protein levels of the food consumed by people on a diet and people not on a diet. All graphs show that as calories increase, protein content tends to increase as well.
+
+Row {}
+--------------------------------------
+### Diet Plot, Span = 0.1
+
+```{r}
+#New data set
+nutrition3 <- read_xpt("DR1TOT_I.XPT")
+nutrition4 <- read_xpt("DR1TOT_I.XPT")
+
+nutrition4 <- subset(nutrition4, DRQSDIET %in% c(1))
+nutrition_nd <- subset(nutrition3, DRQSDIET %in% c(2))
+
+set.seed(342)
+#split into training and testing data
+index <- sample(1:nrow(nutrition4), round(nrow(nutrition4) * 0.7))
+training_df4 <- nutrition4[index, ]
+testing_df4 <- nutrition4[-index, ]
+
+training_df4$model <- "A"
+testing_df4$model <- "B"
+train_test <- rbind(training_df4, testing_df4)
+
+index <- sample(1:nrow(nutrition_nd), round(nrow(nutrition_nd) * 0.7))
+training_df_nd <- nutrition_nd[index, ]
+testing_df_nd <- nutrition_nd[-index, ]
+
+training_df_nd$model <- "A"
+testing_df_nd$model <- "B"
+train_test_nd <- rbind(training_df_nd, testing_df_nd)
+
+ggplot(train_test, aes(x = DR1TKCAL, y = DR1TPROT, color = model, group=model)) + geom_point() + geom_smooth(method = "loess", span=0.1, se = F, linewidth = 0.5) + scale_color_manual( labels = c("Training", "Testing"), values=c("orange", "blue")) + guides(color=guide_legend(" ")) + ggtitle("On a Diet, Calories vs Protein, Span = 0.1")
+```
+
+Row
+-------------------------
+### Diet Plot, Span = 0.3
+
+```{r}
+ggplot(train_test, aes(x = DR1TKCAL, y = DR1TPROT, color = model, group=model)) + geom_point() + geom_smooth(method = "loess", span=0.3, se = F, linewidth = 0.5) + scale_color_manual( labels = c("Training", "Testing"), values=c("orange", "blue")) + guides(color=guide_legend(" ")) + ggtitle("On a Diet, Calories vs Protein, Span = 0.3")
+```
+
+Row
+------------------------
+### Diet Plot, Span = 0.5
+
+```{r}
+ggplot(train_test, aes(x = DR1TKCAL, y = DR1TPROT, color = model, group=model)) + geom_point() + geom_smooth(method = "loess", span=0.5, se = F, linewidth = 0.5) + scale_color_manual( labels = c("Training", "Testing"), values=c("orange", "blue")) + guides(color=guide_legend(" ")) + ggtitle("On a Diet, Calories vs Protein, Span = 0.5")
+```
+
+Row
+---------------------
+### No Diet Plot, Span = 0.1
+
+```{r}
+ggplot(train_test_nd, aes(x = DR1TKCAL, y = DR1TPROT, color = model, group=model)) + geom_point() + geom_smooth(method = "loess", span=0.1, se = F, linewidth = 0.5) + scale_color_manual( labels = c("Training", "Testing"), values=c("orange", "blue")) + guides(color=guide_legend(" ")) + ggtitle("No Diet, Calories vs Protein, Span = 0.1")
+```
+
+Row
+-----------------------------
+### No Diet Plot, Span = 0.3
+
+```{r}
+ggplot(train_test_nd, aes(x = DR1TKCAL, y = DR1TPROT, color = model, group=model)) + geom_point() + geom_smooth(method = "loess", span=0.3, se = F, linewidth = 0.5) + scale_color_manual( labels = c("Training", "Testing"), values=c("orange", "blue")) + guides(color=guide_legend(" ")) + ggtitle("No Diet, Calories vs Protein, Span = 0.3")
+```
+
+Row
+------------------------------
+### No Diet Plot, Span = 0.5
+
+```{r}
+ggplot(train_test_nd, aes(x = DR1TKCAL, y = DR1TPROT, color = model, group=model)) + geom_point() + geom_smooth(method = "loess", span=0.5, se = F, linewidth = 0.5) + scale_color_manual( labels = c("Training", "Testing"), values=c("orange", "blue")) + guides(color=guide_legend(" ")) + ggtitle("No Diet, Calories vs Protein, Span = 0.5")
+```
+
+Row
+----------------------------------
+
+### Analyzing the Models
+
+Here we calculate the MSE values for the training and testing data for both people on diets and people not on diets. We can see that for the majority of the data, a span of 0.1 has the lowest MSE and is therefore the best fit for the data.
+
+Row
+------------------------------
+### Diet MSE
+
+```{r}
+loess.fit.1.diet <- loess(DR1TPROT ~ DR1TKCAL, data = training_df4, degree = 1, span = 0.1)
+loess.fit.1 <- loess(DR1TPROT ~ DR1TKCAL, data = training_df_nd, degree = 1, span = 0.1)
+loess.fit.3.diet <- loess(DR1TPROT ~ DR1TKCAL, data = training_df4, degree = 1, span = 0.3)
+loess.fit.3 <- loess(DR1TPROT ~ DR1TKCAL, data = training_df_nd, degree = 1, span = 0.3)
+loess.fit.5.diet <- loess(DR1TPROT ~ DR1TKCAL, data = training_df4, degree = 1, span = 0.5)
+loess.fit.5 <- loess(DR1TPROT ~ DR1TKCAL, data = training_df_nd, degree = 1, span = 0.5)
+
+yhat_train_diet1 <- predict(loess.fit.1.diet, newdata=training_df4)
+yhat_test_diet1 <- predict(loess.fit.1.diet, newdata=testing_df4, na.rm = TRUE)
+yhat_train_diet3 <- predict(loess.fit.3.diet, newdata=training_df4)
+yhat_test_diet3 <- predict(loess.fit.3.diet, newdata=testing_df4)
+yhat_train_diet5 <- predict(loess.fit.5.diet, newdata=training_df4)
+yhat_test_diet5 <- predict(loess.fit.5.diet, newdata=testing_df4)
+
+yhat_train_nd1 <- predict(loess.fit.1, newdata=training_df_nd)
+yhat_test_nd1 <- predict(loess.fit.1, newdata=testing_df_nd)
+yhat_train_nd3 <- predict(loess.fit.3, newdata=training_df_nd)
+yhat_test_nd3 <- predict(loess.fit.3, newdata=testing_df_nd)
+yhat_train_nd5 <- predict(loess.fit.5, newdata=training_df_nd)
+yhat_test_nd5 <- predict(loess.fit.5, newdata=testing_df_nd)
+
+sqr_tr_diet1 <- rep(0, length(training_df4$DR1TKCAL))
+sqr_te_diet1 <- rep(0, length(testing_df4$DR1TKCAL))
+sqr_tr_diet3 <- rep(0, length(training_df4$DR1TKCAL))
+sqr_te_diet3 <- rep(0, length(testing_df4$DR1TKCAL))
+sqr_tr_diet5 <- rep(0, length(training_df4$DR1TKCAL))
+sqr_te_diet5 <- rep(0, length(testing_df4$DR1TKCAL))
+sqr_tr_nd1 <- rep(0, length(training_df_nd$DR1TKCAL))
+sqr_te_nd1 <- rep(0, length(testing_df_nd$DR1TKCAL))
+sqr_tr_nd3 <- rep(0, length(training_df_nd$DR1TKCAL))
+sqr_te_nd3 <- rep(0, length(testing_df_nd$DR1TKCAL))
+sqr_tr_nd5 <- rep(0, length(training_df_nd$DR1TKCAL))
+sqr_te_nd5 <- rep(0, length(testing_df_nd$DR1TKCAL))
+
+for (i in 1:length(training_df4$DR1TKCAL)) {
+  
+  sqr_tr_diet1[i] <- (training_df4$DR1TKCAL[i] - yhat_train_diet1[i])^2
+  sqr_tr_diet3[i] <- (training_df4$DR1TKCAL[i] - yhat_train_diet3[i])^2
+  sqr_tr_diet5[i] <- (training_df4$DR1TKCAL[i] - yhat_train_diet5[i])^2
+  
+}
+
+for (i in 1:length(testing_df4$DR1TKCAL)) {
+  
+  sqr_te_diet1[i] <- (testing_df4$DR1TKCAL[i] - yhat_test_diet1[i])^2
+  sqr_te_diet3[i] <- (testing_df4$DR1TKCAL[i] - yhat_test_diet3[i])^2
+  sqr_te_diet5[i] <- (testing_df4$DR1TKCAL[i] - yhat_test_diet5[i])^2
+  
+}
+
+mse_tr_diet1 <- sum(sqr_tr_diet1, na.rm = TRUE)/328
+mse_te_diet1 <- sum(sqr_te_diet1, na.rm = TRUE)/141
+mse_tr_diet3 <- sum(sqr_tr_diet3, na.rm = TRUE)/328
+mse_te_diet3 <- sum(sqr_te_diet3, na.rm = TRUE)/141
+mse_tr_diet5 <- sum(sqr_tr_diet5, na.rm = TRUE)/328
+mse_te_diet5 <- sum(sqr_te_diet5, na.rm = TRUE)/141
+
+for (i in 1:length(training_df_nd$DR1TKCAL)) {
+  
+  sqr_tr_nd1[i] <- (training_df_nd$DR1TKCAL[i] - yhat_train_nd1[i])^2
+  sqr_tr_nd3[i] <- (training_df_nd$DR1TKCAL[i] - yhat_train_nd3[i])^2
+  sqr_tr_nd5[i] <- (training_df_nd$DR1TKCAL[i] - yhat_train_nd5[i])^2
+  
+}
+
+for (i in 1:length(testing_df_nd$DR1TKCAL)) {
+  
+  sqr_te_nd1[i] <- (testing_df_nd$DR1TKCAL[i] - yhat_test_nd1[i])^2
+  sqr_te_nd3[i] <- (testing_df_nd$DR1TKCAL[i] - yhat_test_nd3[i])^2
+  sqr_te_nd5[i] <- (testing_df_nd$DR1TKCAL[i] - yhat_test_nd5[i])^2
+  
+}
+
+mse_tr_nd1 <- sum(sqr_tr_nd1, na.rm = TRUE)/328
+mse_te_nd1 <- sum(sqr_te_nd1, na.rm = TRUE)/141
+mse_tr_nd3 <- sum(sqr_tr_nd3, na.rm = TRUE)/328
+mse_te_nd3 <- sum(sqr_te_nd3, na.rm = TRUE)/141
+mse_tr_nd5 <- sum(sqr_tr_nd5, na.rm = TRUE)/328
+mse_te_nd5 <- sum(sqr_te_nd5, na.rm = TRUE)/141
+
+mse_tr_diet <- c(mse_tr_diet1, mse_tr_diet3, mse_tr_diet5)
+mse_te_diet <- c(mse_te_diet1, mse_te_diet3, mse_te_diet5)
+mse_tr_nd <- c(mse_tr_nd1, mse_tr_nd3, mse_tr_nd5)
+mse_te_nd <- c(mse_te_nd1, mse_te_nd3, mse_te_nd5)
+
+MSE_diet <- data.frame(model = c("Span = 0.1", "Span = 0.3", "Span = 0.5"), MSE_Tr_diet = mse_tr_diet, MSE_Te_diet = mse_te_diet)
+
+MSE_nd <- data.frame(model = c("Span = 0.1", "Span = 0.3", "Span = 0.5"), MSE_Tr_no_diet = mse_tr_nd, MSE_Te_no_diet = mse_te_nd)
+
+kable(MSE_diet)
+
+```
+
+Row
+-------
+### No Diet MSE
+
+```{r}
+kable(MSE_nd)
+```
+
+
+Natural Cubic Spline
+=======================================================================
+
+Row
+-------------------------------------
+
+### Background & Write-up
+The research question for the natural cubic spline is the following:
+
+"How does the number of calories in consumed foods change throughout the different times of the day?"
+
+Breakfast is usually the least caloric meal of the day, and more caloric foods are likely to be eaten at dinner or in the evening for desert. Therefore, it is proposed that lower calorie foods are eaten earlier in the day, while higher calorie foods are consumed later in the day. 
+
+Row
+-----------------------------------
+### Cubic Spline split in 4
+
+```{r}
+nutrition5 <- nutrition
+nutrition5[, c(14)] <- sapply(nutrition5[, c(14)], as.character)
+nutrition5$DR2_020 <- gsub("\\:","",nutrition5$DR2_020)
+nutrition5[, c(14)] <- sapply(nutrition5[, c(14)], as.numeric)
+class(nutrition5$DR2_020)
+
+fit.cbsp.1 <- lm(DR2IKCAL ~ cut(nutrition5$DR2_020, 4), data = nutrition5)
+pred.cbsp.1 <- predict(fit.cbsp.1, newdata = nutrition5, se = T)
+
+ggplot(nutrition5, aes(x = DR2_020, y = DR2IKCAL))  + geom_point(pch = 1, color = "gray") +
+  geom_line(data = data.frame(nutrition5$DR2_020, sp = pred.cbsp.1$fit), aes(x = nutrition5$DR2_020, y = sp)) +
+  geom_line(data = data.frame(nutrition5$DR2_020, ub = pred.cbsp.1$fit + 2*pred.cbsp.1$se), aes(x = nutrition5$DR2_020, y = ub), linetype = 2) +
+  geom_line(data = data.frame(nutrition5$DR2_020, lb = pred.cbsp.1$fit - 2*pred.cbsp.1$se), aes(x = nutrition5$DR2_020, y = lb), linetype = 2)
+```
+
+Row
+---------
+
+### Analysis
+
+Above, we can see from this cubic spline that there is not much of a difference in caloric intake at different times of the day, but there is a slight increase towards later parts of the day.
+
+Below, is the same graph, but the a cubic spline segmented at each hour. Since most of the food is concentrated in the low calorie range, there is not much evidence from the cubic spline that there is a trend of higher calorie foods being consumed later in the day. However, that does appear to be the case by looking at the raw graphical data in teh scatter plot.
+
+Row
+-----------------------
+
+### Cubic Spline split in 24
+
+```{r}
+fit.cbsp.2 <- lm(DR2IKCAL ~ cut(nutrition5$DR2_020, 23), data = nutrition5)
+pred.cbsp.2 <- predict(fit.cbsp.2, newdata = nutrition5, se = T)
+
+ggplot(nutrition5, aes(x = DR2_020, y = DR2IKCAL))  + geom_point(pch = 1, color = "gray") +
+  geom_line(data = data.frame(nutrition5$DR2_020, sp = pred.cbsp.2$fit), aes(x = nutrition5$DR2_020, y = sp)) +
+  geom_line(data = data.frame(nutrition5$DR2_020, ub = pred.cbsp.2$fit + 2*pred.cbsp.2$se), aes(x = nutrition5$DR2_020, y = ub), linetype = 2) +
+  geom_line(data = data.frame(nutrition5$DR2_020, lb = pred.cbsp.2$fit - 2*pred.cbsp.2$se), aes(x = nutrition5$DR2_020, y = lb), linetype = 2)
+```
+
